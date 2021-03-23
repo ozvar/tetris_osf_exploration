@@ -9,6 +9,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.decomposition import PCA
 from sklearn.decomposition import FastICA
 
+
 def factor_analyse(df, n_factors=3, rotation=None, method='minres', cutoff=None, display_loadings=False):
     """Conduct factor analysis of df using FactorAnalyzer and specified parameters, returning eigenvalues and factor loadings"""
     fa = FactorAnalyzer(n_factors=n_factors, rotation=rotation, method=method)
@@ -38,9 +39,8 @@ def factor_analyse(df, n_factors=3, rotation=None, method='minres', cutoff=None,
 def princomp(df, n_components=3, cutoff=None, display_loadings=False):
     """Conduct principal components analysis of df using sklearn's PCA, returning eigenvalues and factor loadings"""
     # Standardise the data
-    scaled_df = StandardScaler().fit_transform(df)
-    df = pd.DataFrame(scaled_df, 
-                      index=np.arange(0, len(scaled_df)), 
+    df = pd.DataFrame(df, 
+                      index=np.arange(0, len(df)), 
                       columns=df.columns)
 
     pca = PCA(n_components=n_components)
