@@ -88,7 +88,7 @@ zoid_placement_features = ['move_score',
                            'row_trans',
                            'tetris']
 
-# features analysed in 2019 cog. psy. paper by LIndstedt and Gray - missing resp_lat feature (not in data set)
+# features analysed in 2019 cog. psy. paper by LIndstedt and Gray)
 lindstedt_2019_features = ['rots', 
                            'trans', 
                            'min_rots_diff', 
