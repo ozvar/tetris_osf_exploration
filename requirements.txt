@@ -1,0 +1,9 @@
+numpy
+pandas
+factor_analyzer
+scikit-learn
+matplotlib
+scipy
+hmmlearn
+seaborn
+pingouin
