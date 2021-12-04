@@ -165,9 +165,9 @@ def check_unique_state_matches(n, df, threshold):
     return True
 
 
-def fractional_occupancy(model, state_probs, n_states, factors):
+def fractional_occupancy(model, observed_states, n_states, factors):
     '''Calculate for each state the fraction of total occurrences occupied by that state, return all fractions as a vector'''
-    state_occurrences = list(model.predict(state_probs)) 
+    state_occurrences = list(model.predict(observed_states)) 
     fractional_occupancies = []
     for i in range(n_states):
         fractional_occupancy = np.round(state_occurrences.count(i) / len(state_occurrences),
