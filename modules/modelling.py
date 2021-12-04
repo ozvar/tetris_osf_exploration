@@ -18,7 +18,7 @@ def rand_start_prob(n_states):
 
 def fit_HMM(df, n_states, factors, factor_labels, player_id, nth_game, n_iter, verbose=True, covar_type='diag', null_model=False):
     """Fit HMM, using arrays of factors as observed states, to single tetris game of specified player
-    - returns model, printing transition matrix and log-likelihood"""
+    - returns model, state probabilities, and input array, printing transition matrix and descriptive metrics"""
     # instantiate model
     model = hmm.GaussianHMM(n_components = n_states,
                         covariance_type='diag',
@@ -39,21 +39,77 @@ def fit_HMM(df, n_states, factors, factor_labels, player_id, nth_game, n_iter, v
     
     LL = np.round(model.score(X), 2)
     
-    if null_model is False:
-        print(f'Fitting {n_states} state model to game {nth_game} of player {player_id}')
-    print('---------------------------\n'
-          'Transition probabilities:\n'
-          '---------------------------')
-    print(tabulate_trans_probs(model, n_states), '\n')
-    
-    print('---------------------------\n'
-          'Component means for each state:\n'
-          '---------------------------\n')
-    print(tabulate_means(model, factors, factor_labels, n_states), '\n')
+    if verbose:
+        if null_model is False:
+            print(f'Fitting {n_states} state model to game {nth_game} of player {player_id}')
+        print('---------------------------\n'
+              'Transition probabilities:\n'
+              '---------------------------')
+        print(tabulate_trans_probs(model, n_states), '\n')
 
-    print(f'Log-likelihood of model is {LL}')
+        print('---------------------------\n'
+              'Component means for each state:\n'
+              '---------------------------\n')
+        print(tabulate_means(model, factors, factor_labels, n_states), '\n')
+        
+        print('---------------------------\n'
+              'Fractional occupancy for each state:\n'
+              '---------------------------\n')      
+        print(fractional_occupancy(model, X, n_states, factors).to_string(header=False), '\n')
+        
+        print(f'Switch rate of model is {switch_rate(model, X)}\n')
+
+        print(f'Log-likelihood of model is {LL}')
     
-    return model, post_prob, LL
+    return model, post_prob, X, LL
+
+
+def fit_group_HMM(df, n_states, factors, factor_labels, nth_game, n_iter, verbose=True, covar_type='diag', null_model=False):
+    """Fit HMM, using arrays of factors as observed states, to single tetris game of all players in data set
+    - returns model, state probabilities, and input array, printing transition matrix and descriptive metrics"""
+    # instantiate model
+    model = hmm.GaussianHMM(n_components = n_states,
+                        covariance_type='diag',
+                        n_iter=200)
+    # structure data 
+    game = df[df['game_number'] == nth_game]
+    # reshape arrays
+    factor_arrays = [np.array(game[factor]) for factor in factors]
+    # reshuffle data if null model is of interest
+    if null_model:
+        factor_arrays = [np.random.choice(array, len(array), replace=False) for array in factor_arrays]
+    # reshape data for fitting
+    X = np.column_stack(factor_arrays)
+    # fit model
+    model.fit(X)
+    post_prob = model.predict_proba(X)
+    
+    LL = np.round(model.score(X), 2)
+    
+    if verbose:
+        if null_model is False:
+            print(f'Fitting {n_states} state model to game {nth_game} of all players')
+        print('---------------------------\n'
+              'Transition probabilities:\n'
+              '---------------------------')
+        print(tabulate_trans_probs(model, n_states), '\n')
+
+        print('---------------------------\n'
+              'Component means for each state:\n'
+              '---------------------------\n')
+        print(tabulate_means(model, factors, factor_labels, n_states), '\n')
+
+        print('---------------------------\n'
+              'Fractional occupancy for each state:\n'
+              '---------------------------\n')      
+
+        print(fractional_occupancy(model, X, n_states, factors).to_string(header=False), '\n')
+
+        print(f'Switch rate of model is {switch_rate(model, X)}\n')
+
+        print(f'Log-likelihood of model is {LL}')
+    
+    return model, post_prob, X, LL
 
 
 def tabulate_means(model, factors, factor_labels, n_states):
@@ -107,3 +163,30 @@ def check_unique_state_matches(n, df, threshold):
     
     print('Matching states identified')
     return True
+
+
+def fractional_occupancy(model, state_probs, n_states, factors):
+    '''Calculate for each state the fraction of total occurrences occupied by that state, return all fractions as a vector'''
+    state_occurrences = list(model.predict(state_probs)) 
+    fractional_occupancies = []
+    for i in range(n_states):
+        fractional_occupancy = np.round(state_occurrences.count(i) / len(state_occurrences),
+                                        decimals=4)
+        fractional_occupancies.append(fractional_occupancy)
+
+    row_names = {int(i): f'State {i+1}' for i in range(n_states)}
+    fo_df = pd.DataFrame({'Fractional occupancy': fractional_occupancies})
+    fo_df.rename(index=row_names, inplace=True)
+
+    return fo_df
+
+
+def switch_rate(model, observed_states):
+    '''Calculate rate of switches between states, calculated as number of switches divided by total state occurrences'''
+    states = model.predict(observed_states)
+    switch_count = np.count_nonzero(np.diff(states))
+
+    rate = switch_count / len(states - 1)
+    rate = np.round(rate, 4)
+    
+    return rate
