@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import pickle as pk
 
 from factor_analyzer import FactorAnalyzer
 from factor_analyzer.factor_analyzer import calculate_bartlett_sphericity
@@ -60,5 +61,8 @@ def princomp(df, n_components=3, cutoff=None, display_loadings=False):
     
     if display_loadings is True:
         display(loadings)
+    
+    # write pca for loading reloading in other analyses
+    pk.dump(pca, open("pca.pkl","wb"))
     
     return loadings, pca
