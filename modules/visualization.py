@@ -88,10 +88,13 @@ def error_line(df, var, n, ax=None, xlabel=None, ylabel=None, label=None):
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.set_xticks(xticks)
-    ax.fill_between(np.arange(1, n + 1),
-                     [means[i] + errors[i]*1.96 for i in range(n)],
-                     [means[i] - errors[i]*1.96 for i in range(n)],
-                     alpha=0.15)
+    ax.fill_between(
+            np.arange(1, n + 1),
+            [means[i] + errors[i]*1.96 for i in range(n)],
+            [means[i] - errors[i]*1.96 for i in range(n)],
+            alpha=0.15,
+            label='_nolegend_'
+            )
  
 
 class SeabornFig2Grid():
