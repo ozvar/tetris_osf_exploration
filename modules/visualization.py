@@ -191,3 +191,34 @@ def viz_states(df, n_states, factors, factor_labels, post_prob, player_id, nth_g
         plt.savefig(os.path.join(fig_dir, fig_name), bbox_inches='tight')
 
     plt.show()
+
+
+def plot_transition_matrix(model, components, n_states, null_model=False, fig_dir=None):
+    '''Produce heat map of transition matrix annotated with transition probabilities for specified model
+    and save to directory "fig_dir"'''
+    # define figure parameters
+    fig, ax = plt.subplots()
+    transmat = model.transmat_
+    colors = sns.color_palette("Blues_r", as_cmap=True)
+    tick_labels = np.arange(1, n_states+1)
+    # plot heatmap
+    sns.heatmap(
+            data=transmat,
+            cmap=colors,
+            annot=True,
+            linewidths=0.5,
+            ax=ax,
+            xticklabels=tick_labels,
+            yticklabels=tick_labels
+            )
+    plt.xlabel('State at tetromino t', fontsize=16)
+    plt.ylabel('State at tetromino t-1', fontsize=16)
+    # save figure if directory is specified
+    if fig_dir != None:
+        if not null_model:
+            fig_name = f'{n_states}_state_{len(components)}_component_model_transition_matrix.svg'
+        else:
+            fig_name = f'{n_states}_state_{len(components)}_component_null_model_transition_matrix.svg'
+        plt.savefig(os.path.join(fig_dir, fig_name))
+    plt.close()
+
