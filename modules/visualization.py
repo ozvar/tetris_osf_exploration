@@ -151,18 +151,31 @@ class SeabornFig2Grid():
         self.sg.fig.set_size_inches(self.fig.get_size_inches())
 
         
-def viz_states(df, n_states, factors, factor_labels, post_prob, player_id, nth_game, cmap='tab10', fig_dir=None):
-    """Create joint plot of latent state probabilities and observed states across tetris episodes"""
-    game = df[(df['SID'] == player_id) & (df['game_number'] == nth_game)]
-    episodes = len(game)
+def viz_states(df,
+               n_states,
+               post_prob,
+               components,
+               component_labels,
+               player_id,
+               nth_game,
+               show_plot=False,
+               cmap='tab10',
+               null_model=False,
+               fig_dir=None):
+    """Create joint plot of latent state probabilities and observed states 
+    across tetris episodes"""
+    # figure parameters      
     state_colours = matplotlib.cm.get_cmap(cmap)
-
     fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True)
-
+    # slice rows for the player and game we want to visualize
+    game = df[(df['SID'] == player_id) & (df['game_number'] == nth_game)]
+    indices = game.index.tolist()
+    n_episodes = len(game)
+    # plot state transitions
     states_legend = []
     for state in range(0, n_states):
-        ax1.plot(np.arange(1, episodes), 
-                 post_prob[:episodes-1, state],
+        ax1.plot(np.arange(1, n_episodes+1), 
+                 post_prob[indices, state],
                  color=state_colours(state))
         states_legend.append(f'State {state+1}')
 
@@ -170,27 +183,37 @@ def viz_states(df, n_states, factors, factor_labels, post_prob, player_id, nth_g
     ax1.legend(states_legend, 
                loc='upper left', 
                bbox_to_anchor=(1.05, 1), 
-               frameon=True, 
-               prop={'size': 8})
+               frameon=False
+               )
+    # plot the observed variables
+    components_legend = [component_labels[component] for component in components]
+    for component in components:
+        ax2.plot(np.arange(1, n_episodes+1), game[component][:n_episodes])
 
-    factors_legend = [factor_labels[factor] for factor in factors]
-    for factor in factors:
-        ax2.plot(np.arange(1, episodes), game[factor][:episodes-1])
-
-    ax2.set_ylabel('Factor score')
+    ax2.set_ylabel('Component score')
     ax2.set_xlabel('Episode')
-    ax2.legend(factors_legend, 
+    ax2.legend(components_legend, 
                loc='upper left', 
                bbox_to_anchor=(1.05, 1), 
-               frameon=True, 
-               prop={'size': 8})
+               frameon=False, 
+               )
+    fig.align_ylabels()
+    
+    if not null_model:
+        fig.suptitle(f'Player {player_id} Game {nth_game}: {n_states}-State Model')
+    else:
+        fig.suptitle(f'Player {player_id} Game {nth_game}: {n_states}-State Null Model')
 
-    fig.suptitle(f'Player {player_id} Game {nth_game}: {n_states}-State Model')
     if fig_dir:
-        fig_name = f'{n_states}_state_HMM_player_{player_id}_game_{nth_game}'
-        plt.savefig(os.path.join(fig_dir, fig_name), bbox_inches='tight')
+        if not null_model:
+            fig_name = f'player_{player_id}_{n_states}_state_HMM_game_{nth_game}.svg'
+        else:
+            fig_name = f'null_model_player_{player_id}_{n_states}_state_HMM_game_{nth_game}.svg'
 
-    plt.show()
+        if not os.path.isdir(fig_dir):
+            os.mkdir(fig_dir)
+        plt.savefig(os.path.join(fig_dir, fig_name), bbox_inches='tight')
+    plt.close()
 
 
 def plot_transition_matrix(model, components, n_states, null_model=False, fig_dir=None):
