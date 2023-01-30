@@ -190,6 +190,24 @@ def tabulate_trans_probs(model, n_states):
     return trans_df
 
 
+def fractional_occupancy(df, for_each_participant=False, null_model=False):
+    '''Calculate for each state the time all participants spent in that state as
+    a fraction of total game time, and return as a list'''
+    total_time = df['ep_dur'].sum()
+    if not null_model:
+        state = 'HMM_state'
+    else:
+        state = 'null_HMM_state'
+    if not for_each_participant:
+        groupby_cols = [state]
+    else:
+        groupby_cols = ['SID', state]
+    frac_occ = df.groupby(by=groupby_cols)['ep_dur'].sum() / total_time
+    frac_occ = frac_occ.reset_index()
+
+    return frac_occ
+
+
 def cross_corr(n, a, b):
     corr_mat = np.zeros((n, n))
     for i in range(n):
@@ -214,22 +232,6 @@ def check_unique_state_matches(n, df, threshold):
     
     print('Matching states identified')
     return True
-
-
-def fractional_occupancy(model, observed_states, n_states, factors):
-    '''Calculate for each state the fraction of total occurrences occupied by that state, return all fractions as a vector'''
-    state_occurrences = list(model.predict(observed_states)) 
-    fractional_occupancies = []
-    for i in range(n_states):
-        fractional_occupancy = np.round(state_occurrences.count(i) / len(state_occurrences),
-                                        decimals=4)
-        fractional_occupancies.append(fractional_occupancy)
-
-    row_names = {int(i): f'State {i+1}' for i in range(n_states)}
-    fo_df = pd.DataFrame({'Fractional occupancy': fractional_occupancies})
-    fo_df.rename(index=row_names, inplace=True)
-
-    return fo_df
 
 
 def switch_rate(model, observed_states):

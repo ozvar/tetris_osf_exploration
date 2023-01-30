@@ -9,6 +9,7 @@ import matplotlib.patches as mpatches
 from matplotlib.collections import PatchCollection
 import seaborn as sns
 from munging import compute_means, compute_errors
+from modelling import fractional_occupancy
 
 
 # configure pandas table display
@@ -245,3 +246,42 @@ def plot_transition_matrix(model, components, n_states, null_model=False, fig_di
         plt.savefig(os.path.join(fig_dir, fig_name))
     plt.close()
 
+
+def bar_chart_of_fractional_occupancies(df,
+                                        n_states,
+                                        components,
+                                        null_model=False,
+                                        cmap='tab10',
+                                        fig_dir=None):
+    '''Produce bar chart of fractional occupancies for each state, where fractional occupancy is defined as the fraction
+    of total time participants spend in any given state. The figure is saved to fig_dir if specified'''
+    # compute fractional occupancies
+    frac_occ = fractional_occupancy(
+            df=df,
+            for_each_participant=False,
+            null_model=null_model)
+    if not null_model:
+        state = 'HMM_state'
+    else: 
+        state = 'null_HMM_state'
+    # set parameters and plot
+    state_colours = matplotlib.cm.get_cmap(cmap)
+    state_colours = [state_colours(x) for x in range(n_states)]
+    sns.barplot(
+            data=frac_occ,
+            x=state,
+            y='ep_dur',
+            palette=state_colours
+            )
+    # set axis labels
+    plt.xlabel('State', fontsize=16)
+    plt.ylabel('Frac. occupancy', fontsize=16)
+    # save figure if directory is specified
+    if fig_dir != None:
+        if not null_model:
+            fig_name = f'{n_states}_state_{len(components)}_component_model_bar_chart_of_fractional_occupancies.svg'
+        else:
+            fig_name = f'{n_states}_state_{len(components)}_component_null_model_bar_chart_of_fractional_occupancies.svg'
+
+        plt.savefig(os.path.join(fig_dir, fig_name))
+    plt.close()
