@@ -55,6 +55,7 @@ def princomp(df, n_components=3, cutoff=None, display_loadings=False):
     
     # create sorted dataframe of loadings above a certain cutoff (shows all by default) 
     if cutoff != None:
+        loadings = loadings.round(3)
         loadings = loadings.where(abs(loadings).gt(cutoff))
         loadings = loadings.sort_values(by=headers, ascending=False)
         loadings = loadings.replace(np.nan, '', regex=True)
