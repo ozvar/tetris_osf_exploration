@@ -171,3 +171,57 @@ def viz_states(df, n_states, factors, factor_labels, post_prob, player_id, nth_g
         plt.savefig(os.path.join(fig_dir, fig_name), bbox_inches='tight')
 
     plt.show()
+
+    
+def boxplot_state_component_scores(df, components, n_states, violin=False, null_model=False,
+                                   fig_dir=None):
+    '''Produce boxplot of component scores for each behavioural state in 
+    specified Hidden Markov model and save to "fig_dir" if desired'''
+    if not null_model:
+        state_var = 'HMM_state'
+    else:
+        state_var = 'null_HMM_state'
+    df = pd.melt(
+            frame=df,
+            id_vars=state_var,
+            value_vars=list(components.keys()),
+            var_name='Component',
+            value_name='Component score')
+    
+    if not violin:
+        if not null_model:
+            fig_name = f'{n_states}_state_{len(components)}_component_HMM_comp_score_box_plot.svg'
+        else:
+            fig_name = f'null_model_{n_states}_state_{len(components)}_component_HMM_comp_score_box_plot.svg'
+        ax = sns.boxplot(
+                data=df,
+                x=state_var,
+                y='Component score',
+                hue='Component',
+                linewidth=0.8)
+    
+    else:
+        if not null_model:
+            fig_name = f'{n_states}_state_{len(components)}_component_HMM_comp_score_violin_plot.svg'
+        else:
+            fig_name = f'null_model_{n_states}_state_{len(components)}_component_HMM_comp_score_violin_plot.svg'
+        ax = sns.violinplot(
+                data=df,
+                x=state_var,
+                y='Component score',
+                hue='Component',
+                linewidth=0.8)
+    
+    ax.set_xlabel('State')
+    handles, _ = ax.get_legend_handles_labels()
+    components_legend = list(components.values())
+    plt.legend(
+            handles,
+            components_legend,
+            bbox_to_anchor=(1.05, 1),
+            loc=2
+            )
+    
+    if fig_dir != None:
+        plt.savefig(os.path.join(fig_dir, fig_name), bbox_inches='tight')
+    plt.close()
